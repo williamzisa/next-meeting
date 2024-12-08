@@ -1,101 +1,385 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { TeamSidebar } from "@/components/ui/team-sidebar";
+import { MeetingHeader } from "@/components/ui/meeting-header";
+import { KeyResultCard } from "@/components/ui/key-result-card";
+import { AddItemDialog } from "@/components/ui/add-item-dialog";
+import { v4 as uuidv4 } from "uuid";
+
+interface Meeting {
+  id: string;
+  title: string;
+  date: Date;
+  description: string;
+}
+
+interface KeyResult {
+  id: string;
+  title: string;
+  current: number;
+  target: number;
+  forecast: number;
+  forecastDate: Date;
+}
+
+interface Risk {
+  id: string;
+  description: string;
+}
+
+interface Initiative {
+  id: string;
+  description: string;
+  isNew: boolean;
+}
+
+interface TeamData {
+  keyResults: KeyResult[];
+  risks: Risk[];
+  initiatives: Initiative[];
+}
+
+interface KeyResultFormData {
+  title: string;
+  current: number;
+  target: number;
+  forecast: number;
+  forecastDate: string;
+}
+
+interface RiskFormData {
+  description: string;
+}
+
+interface InitiativeFormData {
+  description: string;
+  type: "new" | "shared";
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [teams, setTeams] = useState<string[]>([
+    "CEO",
+    "Marketing",
+    "Operations",
+  ]);
+  const [selectedTeam, setSelectedTeam] = useState("CEO");
+  const [meetings, setMeetings] = useState<Meeting[]>([
+    {
+      id: "1",
+      title: "Monthly OKR Meeting",
+      date: new Date(),
+      description: "Review and discuss team progress, initiatives, and risks",
+    },
+  ]);
+  const [selectedMeeting, setSelectedMeeting] = useState<Meeting>(meetings[0]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+  const [teamData, setTeamData] = useState<Record<string, TeamData>>({
+    CEO: {
+      keyResults: [
+        {
+          id: "1",
+          title: "Fatturato complessivo",
+          current: 8,
+          target: 10,
+          forecast: 7,
+          forecastDate: new Date("2024-12-08"),
+        },
+      ],
+      risks: [
+        {
+          id: "1",
+          description: "Nuovo rischio connesso",
+        },
+      ],
+      initiatives: [
+        {
+          id: "1",
+          description:
+            "Comunicazione su % da assegnare PCG; altrimenti ci sarà standard",
+          isNew: true,
+        },
+      ],
+    },
+    Marketing: { keyResults: [], risks: [], initiatives: [] },
+    Operations: { keyResults: [], risks: [], initiatives: [] },
+  });
+
+  const handleAddTeam = (team: string) => {
+    setTeams((prev) => [...prev, team]);
+    setTeamData((prev) => ({
+      ...prev,
+      [team]: { keyResults: [], risks: [], initiatives: [] },
+    }));
+  };
+
+  const handleDeleteMeeting = () => {
+    setMeetings((prev) => prev.filter((m) => m.id !== selectedMeeting.id));
+    if (meetings.length > 1) {
+      setSelectedMeeting(meetings[0]);
+    }
+  };
+
+  const handleAddMeeting = () => {
+    const newMeeting: Meeting = {
+      id: uuidv4(),
+      title: "New OKR Meeting",
+      date: new Date(),
+      description: "Review and discuss team progress, initiatives, and risks",
+    };
+    setMeetings((prev) => [...prev, newMeeting]);
+    setSelectedMeeting(newMeeting);
+  };
+
+  const handleAddKeyResult = (data: KeyResultFormData) => {
+    const newKeyResult: KeyResult = {
+      id: uuidv4(),
+      title: data.title,
+      current: data.current,
+      target: data.target,
+      forecast: data.forecast,
+      forecastDate: new Date(data.forecastDate),
+    };
+
+    setTeamData((prev) => ({
+      ...prev,
+      [selectedTeam]: {
+        ...prev[selectedTeam],
+        keyResults: [...prev[selectedTeam].keyResults, newKeyResult],
+      },
+    }));
+  };
+
+  const handleAddRisk = (data: RiskFormData) => {
+    const newRisk: Risk = {
+      id: uuidv4(),
+      description: data.description,
+    };
+
+    setTeamData((prev) => ({
+      ...prev,
+      [selectedTeam]: {
+        ...prev[selectedTeam],
+        risks: [...prev[selectedTeam].risks, newRisk],
+      },
+    }));
+  };
+
+  const handleAddInitiative = (data: InitiativeFormData) => {
+    const newInitiative: Initiative = {
+      id: uuidv4(),
+      description: data.description,
+      isNew: data.type === "new",
+    };
+
+    setTeamData((prev) => ({
+      ...prev,
+      [selectedTeam]: {
+        ...prev[selectedTeam],
+        initiatives: [...prev[selectedTeam].initiatives, newInitiative],
+      },
+    }));
+  };
+
+  return (
+    <div className="flex h-screen bg-white">
+      <TeamSidebar
+        teams={teams}
+        selectedTeam={selectedTeam}
+        onTeamSelect={setSelectedTeam}
+        onTeamAdd={handleAddTeam}
+      />
+
+      <main className="flex-1 p-8 overflow-y-auto">
+        <MeetingHeader
+          title={selectedMeeting.title}
+          description={selectedMeeting.description}
+          date={selectedMeeting.date}
+          onDelete={handleDeleteMeeting}
+          onAdd={handleAddMeeting}
+          onDateChange={(date) => {
+            setSelectedMeeting((prev) => ({ ...prev, date }));
+            setMeetings((prev) =>
+              prev.map((m) =>
+                m.id === selectedMeeting.id ? { ...m, date } : m
+              )
+            );
+          }}
+        />
+
+        <section className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">{selectedTeam}</h2>
+          </div>
+
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4 flex justify-between items-center">
+              Key Results
+              <AddItemDialog
+                title="Aggiungi Key Result"
+                trigger={
+                  <Button variant="ghost" size="sm">
+                    Add Key Result
+                  </Button>
+                }
+                fields={[
+                  {
+                    name: "title",
+                    label: "Titolo",
+                    type: "text",
+                    required: true,
+                  },
+                  {
+                    name: "current",
+                    label: "Valore attuale",
+                    type: "number",
+                    required: true,
+                  },
+                  {
+                    name: "target",
+                    label: "Obiettivo",
+                    type: "number",
+                    required: true,
+                  },
+                  {
+                    name: "forecast",
+                    label: "Previsione",
+                    type: "number",
+                    required: true,
+                  },
+                  {
+                    name: "forecastDate",
+                    label: "Data previsione",
+                    type: "date",
+                    required: true,
+                  },
+                ]}
+                onSubmit={handleAddKeyResult}
+              />
+            </h3>
+            <div className="space-y-4">
+              {teamData[selectedTeam].keyResults.map((kr) => (
+                <KeyResultCard key={kr.id} {...kr} />
+              ))}
+            </div>
+          </Card>
+        </section>
+
+        <section className="mb-8">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4 flex justify-between items-center">
+              Shared Risks
+              <AddItemDialog
+                title="Aggiungi Rischio"
+                trigger={
+                  <Button variant="ghost" size="sm">
+                    Add Risk
+                  </Button>
+                }
+                fields={[
+                  {
+                    name: "description",
+                    label: "Descrizione",
+                    type: "text",
+                    required: true,
+                  },
+                ]}
+                onSubmit={handleAddRisk}
+              />
+            </h3>
+            <div className="space-y-2">
+              {teamData[selectedTeam].risks.map((risk) => (
+                <div
+                  key={risk.id}
+                  className="flex items-center gap-2 text-amber-500"
+                >
+                  <span>⚠️</span>
+                  <span>{risk.description}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </section>
+
+        <section className="mb-8">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4 flex justify-between items-center">
+              Shared Initiatives
+              <AddItemDialog
+                title="Aggiungi Iniziativa Condivisa"
+                trigger={
+                  <Button variant="ghost" size="sm">
+                    Add Initiative
+                  </Button>
+                }
+                fields={[
+                  {
+                    name: "description",
+                    label: "Descrizione",
+                    type: "text",
+                    required: true,
+                  },
+                  { name: "type", label: "Tipo", type: "text", required: true },
+                ]}
+                onSubmit={(data) =>
+                  handleAddInitiative({ ...data, type: "shared" })
+                }
+              />
+            </h3>
+            <div className="space-y-2">
+              {teamData[selectedTeam].initiatives
+                .filter((i) => !i.isNew)
+                .map((initiative) => (
+                  <div key={initiative.id} className="flex items-center gap-2">
+                    <span>{initiative.description}</span>
+                  </div>
+                ))}
+            </div>
+          </Card>
+        </section>
+
+        <section>
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4 flex justify-between items-center">
+              New Initiatives
+              <AddItemDialog
+                title="Aggiungi Nuova Iniziativa"
+                trigger={
+                  <Button variant="ghost" size="sm">
+                    Add New Initiative
+                  </Button>
+                }
+                fields={[
+                  {
+                    name: "description",
+                    label: "Descrizione",
+                    type: "text",
+                    required: true,
+                  },
+                  { name: "type", label: "Tipo", type: "text", required: true },
+                ]}
+                onSubmit={(data) =>
+                  handleAddInitiative({ ...data, type: "new" })
+                }
+              />
+            </h3>
+            <div className="space-y-2">
+              {teamData[selectedTeam].initiatives
+                .filter((i) => i.isNew)
+                .map((initiative) => (
+                  <div key={initiative.id} className="flex items-center gap-2">
+                    <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded">
+                      new
+                    </span>
+                    <span>{initiative.description}</span>
+                  </div>
+                ))}
+            </div>
+          </Card>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
