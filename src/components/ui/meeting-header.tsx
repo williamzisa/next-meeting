@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "./button";
-import { CalendarIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { CalendarIcon, PlusIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,68 +10,77 @@ import {
 } from "./dropdown-menu";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { Meeting } from "@/lib/supabase";
 
 interface MeetingHeaderProps {
-  title: string;
-  description: string;
-  date: Date;
-  onDelete: () => void;
-  onAdd: () => void;
-  onDateChange: (date: Date) => void;
+  selectedMeeting: Meeting | null;
+  meetings: Meeting[];
+  onSelectMeeting: (meeting: Meeting) => void;
+  onAddMeeting: (date: string) => void;
+  meetingEffectiveness: number;
 }
 
 export function MeetingHeader({
-  title,
-  description,
-  date,
-  onDelete,
-  onAdd,
-  onDateChange,
+  selectedMeeting,
+  meetings,
+  onSelectMeeting,
+  onAddMeeting,
+  meetingEffectiveness,
 }: MeetingHeaderProps) {
-  const formattedDate = format(date, "dd MMMM yyyy", { locale: it });
+  if (!selectedMeeting) {
+    return (
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-semibold">Seleziona un Meeting</h1>
+          <p className="text-gray-500">
+            Scegli un meeting esistente o creane uno nuovo
+          </p>
+        </div>
+        <Button onClick={() => onAddMeeting(new Date().toISOString())}>
+          <PlusIcon className="h-4 w-4 mr-2" />
+          Nuovo Meeting
+        </Button>
+      </div>
+    );
+  }
+
+  const formattedDate = format(new Date(selectedMeeting.date), "dd MMMM yyyy", {
+    locale: it,
+  });
 
   return (
     <div className="flex justify-between items-center mb-8">
       <div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold">{title}</h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                {formattedDate}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {[7, 14, 30].map((days) => (
-                <DropdownMenuItem
-                  key={days}
-                  onClick={() => {
-                    const newDate = new Date();
-                    newDate.setDate(newDate.getDate() + days);
-                    onDateChange(newDate);
-                  }}
-                >
-                  + {days} giorni
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-semibold">Meeting {formattedDate}</h1>
+          <div className="text-sm text-gray-500">
+            Efficacia:{" "}
+            <span className="font-medium">{meetingEffectiveness}</span>
+          </div>
         </div>
-        <p className="text-gray-500">{description}</p>
-      </div>
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          className="text-red-500 border-red-500"
-          onClick={onDelete}
-        >
-          <TrashIcon className="h-4 w-4" />
-        </Button>
-        <Button size="icon" onClick={onAdd}>
-          <PlusIcon className="h-4 w-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              {formattedDate}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {meetings.map((meeting) => (
+              <DropdownMenuItem
+                key={meeting.id}
+                onClick={() => onSelectMeeting(meeting)}
+              >
+                {format(new Date(meeting.date), "dd MMMM yyyy", { locale: it })}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuItem
+              onClick={() => onAddMeeting(new Date().toISOString())}
+            >
+              + Nuovo Meeting
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

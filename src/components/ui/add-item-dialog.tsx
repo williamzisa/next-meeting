@@ -20,7 +20,7 @@ interface Field {
 }
 
 interface FormData {
-  [key: string]: string | number | Date;
+  [key: string]: string | number;
 }
 
 interface AddItemDialogProps {
@@ -46,6 +46,13 @@ export function AddItemDialog({
     setOpen(false);
   };
 
+  const handleChange = (field: Field, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field.name]: field.type === "number" ? Number(value) : value,
+    }));
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -62,15 +69,7 @@ export function AddItemDialog({
                 type={field.type}
                 required={field.required}
                 value={formData[field.name] || ""}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    [field.name]:
-                      field.type === "number"
-                        ? Number(e.target.value)
-                        : e.target.value,
-                  }))
-                }
+                onChange={(e) => handleChange(field, e.target.value)}
               />
             </div>
           ))}

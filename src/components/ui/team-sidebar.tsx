@@ -3,25 +3,28 @@
 import { useState } from "react";
 import { Button } from "./button";
 import { Input } from "./input";
+import { Team } from "@/lib/supabase";
 
 interface TeamSidebarProps {
-  teams: string[];
-  selectedTeam: string;
-  onTeamSelect: (team: string) => void;
-  onTeamAdd: (team: string) => void;
+  teams: Team[];
+  selectedTeam: Team | null;
+  onSelectTeam: (team: Team) => void;
+  onAddTeam: (company: string) => void;
+  teamEffectiveness: number;
 }
 
 export function TeamSidebar({
   teams,
   selectedTeam,
-  onTeamSelect,
-  onTeamAdd,
+  onSelectTeam,
+  onAddTeam,
+  teamEffectiveness,
 }: TeamSidebarProps) {
   const [newTeam, setNewTeam] = useState("");
 
   const handleAddTeam = () => {
     if (newTeam.trim()) {
-      onTeamAdd(newTeam.trim());
+      onAddTeam(newTeam.trim());
       setNewTeam("");
     }
   };
@@ -29,24 +32,28 @@ export function TeamSidebar({
   return (
     <aside className="w-64 bg-[#3a88ff] text-white p-6 flex flex-col h-full">
       <h2 className="text-xl font-semibold mb-6">Teams</h2>
+      <div className="mb-4">
+        <div className="text-sm opacity-80">Efficacia del Team</div>
+        <div className="text-2xl font-bold">{teamEffectiveness}</div>
+      </div>
       <nav className="space-y-2 flex-1">
         {teams.map((team) => (
           <Button
-            key={team}
+            key={team.id}
             variant="ghost"
             className={`w-full justify-start text-white hover:bg-blue-600 ${
-              selectedTeam === team ? "bg-blue-600" : ""
+              selectedTeam?.id === team.id ? "bg-blue-600" : ""
             }`}
-            onClick={() => onTeamSelect(team)}
+            onClick={() => onSelectTeam(team)}
           >
-            {team}
+            {team.company}
           </Button>
         ))}
       </nav>
       <div className="pt-4 border-t border-blue-400">
         <Input
           type="text"
-          placeholder="Team name..."
+          placeholder="Nome team..."
           value={newTeam}
           onChange={(e) => setNewTeam(e.target.value)}
           className="w-full bg-blue-600 text-white placeholder-blue-300 border-none focus:ring-2 focus:ring-white"
@@ -57,7 +64,7 @@ export function TeamSidebar({
           className="mt-2 w-full text-white hover:bg-blue-600"
           onClick={handleAddTeam}
         >
-          Add
+          Aggiungi
         </Button>
       </div>
     </aside>

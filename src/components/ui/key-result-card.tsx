@@ -1,14 +1,11 @@
 "use client";
 
-import { format } from "date-fns";
-import { it } from "date-fns/locale";
-
 interface KeyResultProps {
   title: string;
   current: number;
   target: number;
   forecast: number;
-  forecastDate: Date;
+  forecastDate: string;
 }
 
 export function KeyResultCard({
@@ -19,7 +16,6 @@ export function KeyResultCard({
   forecastDate,
 }: KeyResultProps) {
   const progress = (current / target) * 100;
-  const formattedDate = format(forecastDate, "dd/MM/yyyy", { locale: it });
 
   return (
     <div className="p-4 border rounded-lg">
@@ -41,7 +37,7 @@ export function KeyResultCard({
         </div>
       </div>
       <div className="mt-2 text-sm text-gray-500">
-        Forecast: {forecast} • {formattedDate}
+        Forecast: {forecast} • {forecastDate}
       </div>
     </div>
   );
